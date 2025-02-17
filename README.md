@@ -1,29 +1,103 @@
-# Create T3 App
+# Dubtrack
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+## Overview
 
-## What's next? How do I make an app with this?
+Dubtrack is a URL shortener and tracker that allows users to generate QR codes for short links. The application is designed to provide analytics and insights for each QR code scanned.
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+## Features
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- **Short URL Generation** – Create shortened URLs with automatically generated short codes.
+- **QR Code Generation** – Generate a QR code for each shortened link.
+- **Analytics** – Track QR code scans, including time, location, and user agent.
+- **Dockerized PostgreSQL Database** – Uses PostgreSQL hosted in a Docker container for reliable data storage.
+- **Custom Shortcodes (Upcoming Feature)** – Users will soon be able to define their own shortcodes for URLs instead of auto-generated ones.
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Live Application
 
-## Learn More
+You can access the live version of the QR Tracker at:
+[https://dubtrack.xyz/](https://dubtrack.xyz/)
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Getting Started
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+### Prerequisites
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+Ensure you have the following installed:
 
-## How do I deploy this?
+- [Docker](https://www.docker.com/)
+- [Node.js](https://nodejs.org/)
+- [Yarn](https://yarnpkg.com/)
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+### Installation & Setup
+
+1. **Clone the Repository**
+   ```sh
+   git clone https://github.com/your-username/qr-tracker.git
+   cd qr-tracker
+   ```
+2. **Start PostgreSQL Database in Docker**
+   ```sh
+   docker-compose up -d
+   ```
+3. **Install Dependencies**
+   ```sh
+   yarn install
+   ```
+4. **Run the Application**
+   ```sh
+   yarn dev
+   ```
+
+## Environment Variables
+
+Create a `.env` file in the root directory and add the following:
+
+```ini
+DATABASE_URL=postgres://user:password@localhost:5432/qr_tracker
+NEXT_PUBLIC_BASE_URL=https://<customdomain>.---
+AUTH_SECRET="secret"
+AUTH_GOOGLE_ID=<google-client>
+AUTH_GOOGLE_SECRET=<google-secret>
+NEXTAUTH_SECRET=your_random_secret
+NEXTAUTH_URL= http://localhost:3000
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=<password>
+POSTGRES_DB=qr-scanner
+POSTGRES_HOST=localhost  
+```
+
+## Usage
+
+1. Open the application and enter a long URL to generate a shortened version.
+2. Use the provided QR code for scanning.
+3. View analytics to track scans.
+
+## Roadmap
+
+- ✅ URL shortening with automatic shortcodes
+- ✅ QR code generation
+- ✅ Detailed scan analytics with user insights
+- ✅ Admin dashboard for managing links
+- 🔜 Custom user-defined shortcodes
+
+
+## Contributing
+
+Contributions are welcome! Please submit a pull request or open an issue for discussion.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+If you find Dubtrack useful and would like to help keep it running as a free service, consider supporting us through a donation. Your contributions help cover maintenance costs and ensure continued development. 
+
+Don't feel obligated, however, if you would like to help support the costs:\
+([Donation Here!](https://dubtrack.xyz/support))
+
+
+
+---
+
+For questions or support, reach out at [https://dubtrack.xyz/](https://dubtrack.xyz/)!
+
