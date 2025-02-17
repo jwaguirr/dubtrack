@@ -1,0 +1,238 @@
+"use client";
+
+import React from "react";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { Button, Card, CardBody } from "@heroui/react";
+import {
+  IconHome,
+  IconUser,
+  IconLayoutDashboard,
+  IconQrcode,
+} from "@tabler/icons-react";
+import dynamic from "next/dynamic";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+
+
+const COLORS = ["#007bff", "#6c757d", "#28a745", "#ffc107", "#dc3545", "#17a2b8", "#6610f2"];
+
+const Map = dynamic(() => import("~/app/qr-analytics/components/map"), { ssr: false });
+
+
+// Fetch the most recent QR code if no qr_uid is provided
+const fetchLatestQr = async (): Promise<{ qr_uid: string }> => {
+  const response = await fetch("/api/qr/qr-stats/specific-qr/analytics");
+  if (!response.ok) throw new Error("Failed to fetch latest QR code");
+  return await response.json();
+};
+
+// Fetch analytics for a specific QR code
+const fetchQrAnalytics = async (qr_uid: string) => {
+  const response = await fetch(`/api/qr/qr-stats/specific-qr/analytics?qr_uid=${qr_uid}`);
+  if (!response.ok) throw new Error("Failed to fetch QR analytics");
+  return await response.json();
+};
+
+// Fetch scan trends for a specific QR code
+const fetchScanTrends = async (qr_uid: string) => {
+  const response = await fetch(`/api/qr/qr-stats/specific-qr/scans-over-time?qr_uid=${qr_uid}`);
+  if (!response.ok) throw new Error("Failed to fetch scan trends");
+  return await response.json();
+};
+
+// Fetch OS breakdown for a specific QR code
+const fetchOsBreakdown = async (qr_uid: string) => {
+  const response = await fetch(`/api/qr/qr-stats/specific-qr/os-breakdown?qr_uid=${qr_uid}`);
+  if (!response.ok) throw new Error("Failed to fetch OS breakdown");
+  return await response.json();
+};
+
+// Fetch top locations for a specific QR code
+const fetchTopLocations = async (qr_uid: string) => {
+  const response = await fetch(`/api/qr/qr-stats/specific-qr/top-locations?qr_uid=${qr_uid}`);
+  if (!response.ok) throw new Error("Failed to fetch top locations");
+  return await response.json();
+};
+
+export default function SingleQrAnalytics() {
+  const params = useParams();
+  const passedQrUid = params.qr_uid as string;
+
+  // Fetch latest QR if none is passed
+  const { data: latestQr, isLoading: isLatestQrLoading } = useQuery({
+    queryKey: ["latest-qr"],
+    queryFn: fetchLatestQr,
+    enabled: !passedQrUid,
+  });
+  console.log(latestQr)
+  const qr_uid = passedQrUid || latestQr?.qr_uid;
+
+  // Fetch analytics data for the QR code
+  const { data: qrAnalytics, isLoading: isAnalyticsLoading } = useQuery({
+    queryKey: ["qr-analytics", qr_uid],
+    queryFn: () => fetchQrAnalytics(qr_uid!),
+    enabled: !!qr_uid,
+  });
+
+  // Fetch scan trends
+  const { data: scanTrends, isLoading: isScanTrendsLoading } = useQuery({
+    queryKey: ["scan-trends", qr_uid],
+    queryFn: () => fetchScanTrends(qr_uid!),
+    enabled: !!qr_uid,
+  });
+
+  // Fetch OS breakdown
+  const { data: osBreakdown, isLoading: isOsBreakdownLoading } = useQuery({
+    queryKey: ["os-breakdown", qr_uid],
+    queryFn: () => fetchOsBreakdown(qr_uid!),
+    enabled: !!qr_uid,
+    select: (data) => ({
+        osBreakdown: data.osBreakdown.map(entry => ({
+            os: entry.os,
+            percentage: parseFloat(entry.percentage), // Ensure it's a float
+        }))
+    }),
+});
+
+
+
+
+  const { data: topLocations, isLoading: isTopLocationsLoading } = useQuery({
+    queryKey: ["top-locations", qr_uid],
+    queryFn: () => fetchTopLocations(qr_uid!),
+    enabled: !!qr_uid,
+    select: (data) => ({
+        topLocations: Array.isArray(data?.topCities) // Ensure it's an array before filtering
+            ? data.topCities
+                .filter(loc => loc.city && loc.lat && loc.lon) // Remove invalid entries
+                .map(loc => ({
+                    ...loc,
+                    lat: parseFloat(loc.lat), // Ensure lat is a number
+                    lon: parseFloat(loc.lon), // Ensure lon is a number
+                    percentage: parseFloat(loc.percentage), // Ensure percentage is a number
+                }))
+            : [] // Default empty array if undefined
+    }),
+});
+
+  return (
+    <div className="min-h-screen bg-gray-100 text-gray-800">
+      {/* Top Bar */}
+      <div className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+          <div className="flex items-center space-x-8">
+            <h1 className="text-xl font-bold text-blue-600">dubtrack</h1>
+            <span className="text-sm text-gray-500">
+              Viewing Analytics for <strong className="text-gray-700">{qr_uid || "Loading..."}</strong>
+            </span>
+          </div>
+          <Button color="default" variant="bordered" className="border border-blue-600 text-blue-600" href="/dashboard">
+            Go Back
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Top Stats */}
+        <div className="flex justify-between gap-4 flex-wrap">
+          <Card className="shadow-md w-full px-6 sm:w-auto">
+            <CardBody>
+              <div className="text-2xl font-bold">{qrAnalytics?.analytics.total_scans ?? "Loading..."}</div>
+              <div className="text-sm text-gray-500">Total Scans</div>
+            </CardBody>
+          </Card>
+
+          <Card className="shadow-md w-full px-6 sm:w-auto">
+            <CardBody>
+              <div className="text-2xl font-bold">{qrAnalytics?.analytics.total_scans ?? "Loading..."}</div>
+              <div className="text-sm text-gray-500">Total Scans</div>
+            </CardBody>
+          </Card>
+
+          <Card className="shadow-md w-full px-6 sm:w-auto">
+            <CardBody>
+              <div className="text-2xl font-bold">{qrAnalytics?.analytics.unique_scans ?? "Loading..."}</div>
+              <div className="text-sm text-gray-500">Unique Scans</div>
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Charts */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Left: Line Chart for Scan Trends */}
+          <div className="md:col-span-8 bg-white shadow-md rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-4">Scans Over Time</h3>
+            {isScanTrendsLoading ? (
+              <p>Loading...</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={scanTrends?.scanTrends}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="scan_date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="total_scans" stroke="#007bff" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Right: Donut Chart for OS Breakdown */}
+          <div className="md:col-span-4 bg-white shadow-md rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-4">Operating System</h3>
+            {isOsBreakdownLoading ? (
+              <p>Loading...</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={osBreakdown?.osBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={100} fill="#8884d8" dataKey="percentage" nameKey="os">
+                    {osBreakdown?.osBreakdown.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Top Locations */}
+        <div className="mt-8 bg-white shadow-md rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-4">Top Locations</h3>
+          {isTopLocationsLoading ? (
+            <p>Loading...</p>
+          ) : (
+            <div className="space-y-2">
+              <div className="space-y-2">
+                        {topLocations?.topLocations?.map((loc) => (
+                            <div key={loc.city} className="flex items-center justify-between">
+                                <span>{loc.city}</span>
+                                <span className="text-gray-500">{loc.percentage}%</span>
+                            </div>
+                        ))}
+                    </div>
+            </div>
+          )}
+        </div>
+
+
+        {/* Map */}
+        <div className="mt-8 bg-white shadow-md rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-4">Your Clicks</h3>
+            {isTopLocationsLoading ? (
+                <p>Loading...</p>
+            ) : (
+                <>
+                    <div className="mt-6">
+                        {/* <Map locations={topLocations?.topLocations ?? []} /> */}
+                    </div>
+                </>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+}

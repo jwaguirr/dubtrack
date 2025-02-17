@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: qr-scanner
+    restart: always    # Add this line
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret_init_pass
+      POSTGRES_DB: qr-scanner
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pgdata:
+
+# Install the docker dmg and make sure to add this to ~/.zprofile `export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin/"`
